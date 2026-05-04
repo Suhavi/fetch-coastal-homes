@@ -1,0 +1,10 @@
+[project]
+name = "timethetide"
+version = "0.1"
+
+[dependencies]
+python = "3.13.13"
+numpy = "2.4.3"
+
+
+# conda environemnt = flood
