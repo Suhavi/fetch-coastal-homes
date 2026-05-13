@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 
+# fixed asset assumtion
+
 @dataclass
 class House:
     sqft: float
     value_usd: float
     first_floor_elevation_ft: float
-    lifetime_years: int = 30
+    lifetime_years: int = 100
     # extendable factors
     location: str = ""
     foundation_type: str = ""
