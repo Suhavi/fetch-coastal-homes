@@ -30,6 +30,6 @@ def expected_annual_damage(house, sow, delta_h_ft = 0.0):
 def lifetime_expected_damage(house, sow, delta_h_ft=0.0):
 
     ead = expected_annual_damage(house, sow, delta_h_ft)
-    factors = sow.discount_factors[:sow.lifetime_years]
+    factors = sow.factors[:sow.lifetime_years]
 
     return ead * np.sum(factors)
