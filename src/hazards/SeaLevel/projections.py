@@ -1,6 +1,9 @@
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import os
+import sys
+from pathlib import Path
 
 MODEL_COLORS = {
     "K14": "tab:green",
@@ -10,7 +13,11 @@ MODEL_COLORS = {
 }
 
 
-from io_slr import fetch_simulation, fetch_lsl
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+
+from src.hazards.SeaLevel.io_projections import fetch_lsl
 
 sns.set_theme(style="whitegrid", context="paper")
 
@@ -67,6 +74,8 @@ def plot_2100_boxplot(ensembles):
 
 if __name__ == "__main__":
     ensembles = fetch_lsl(syear=2026, eyear=2100)
+
+    os.makedirs("plots/slr", exist_ok=True)
 
     fig, ax = plot_slr_timeseries(ensembles)
     fig.tight_layout()

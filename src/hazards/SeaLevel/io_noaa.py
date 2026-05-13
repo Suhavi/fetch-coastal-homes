@@ -1,5 +1,6 @@
 import requests
 import numpy as np
+import os
 from datetime import datetime
 from dataclasses import dataclass
 
@@ -13,6 +14,7 @@ class WaterLevelStation:
 
 
 NOAA_BASE_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+CACHE_DIR = "data/raw/noaa"
 
 SEWELLS = WaterLevelStation(
             datum     =  "NAVD", 
@@ -35,20 +37,48 @@ def water_level_params(station, year):
     "format": "json"
     }
 
+
+def cache_file(station, year):
+    return os.path.join(CACHE_DIR, f"{station.gage_id}_{year}_{station.datum}_{station.units}.npz")
+
+
 def fetch_hourly_water_levels(station, year):
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    fname = cache_file(station, year)
+
+    if os.path.exists(fname):
+        cached = np.load(fname, allow_pickle=True)
+        return {
+            "station": station,
+            "year": year,
+            "time": cached["time"],
+            "water_level_ft": cached["water_level_ft"],
+        }
+
     params = water_level_params(station, year)
     response = requests.get(NOAA_BASE_URL, params=params)
     response.raise_for_status()
 
-    raw = response.json()["data"]
-    times = np.array([
-        datetime.strptime(row["t"], "%Y-%m-%d %H:%M")
-        for row in raw
-    ])
-    water_level_ft = np.array([
-        float(row["v"])
-        for row in raw
-    ])
+    response_data = response.json()
+    if "error" in response_data:
+        raise ValueError(response_data["error"]["message"])
+
+    raw = response_data["data"]
+    times = []
+    water_level_ft = []
+
+    for row in raw:
+        try:
+            value = float(row["v"])
+        except ValueError:
+            continue
+
+        times.append(datetime.strptime(row["t"], "%Y-%m-%d %H:%M"))
+        water_level_ft.append(value)
+
+    times = np.array(times)
+    water_level_ft = np.array(water_level_ft)
+    np.savez(fname, time=times, water_level_ft=water_level_ft)
 
     return {
         "station": station,
