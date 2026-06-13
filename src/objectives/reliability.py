@@ -19,5 +19,29 @@ def lifetime_prob_no_flooding(house, sow, delta_h_ft: float = 0.0):
     return annual_prob ** lifetime_years
 
 
+def annual_no_flood_probability_timed(house, sow, strategy):
+    annual_probs = []
+
+    for year in sow.years[:sow.lifetime_years]:
+        if year < strategy.action_year:
+            delta_h = 0.0
+        else:
+            delta_h = strategy.delta_h_ft
+
+        annual_probs.append(annual_no_flood_probability(house, sow, delta_h))
+
+    return np.array(annual_probs)
+
+
+def lifetime_prob_no_flooding_timed(house, sow, strategy):
+    annual_probs = annual_no_flood_probability_timed(house, sow, strategy)
+
+    return np.prod(annual_probs)
+
+
 def lifetime_flood_probability(house, sow, delta_h_ft: float = 0.0):
     return 1 - lifetime_prob_no_flooding(house, sow, delta_h_ft)
+
+
+def lifetime_flood_probability_timed(house, sow, strategy):
+    return 1 - lifetime_prob_no_flooding_timed(house, sow, strategy)

@@ -4,3 +4,5 @@
 *.egg-info
 *.ipynb
 data/raw/noaa/
+.DS_Store
+tl_2022_42_tabblock20.zip

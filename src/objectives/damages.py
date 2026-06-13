@@ -33,3 +33,18 @@ def lifetime_expected_damage(house, sow, delta_h_ft=0.0):
     factors = sow.factors[:sow.lifetime_years]
 
     return ead * np.sum(factors)
+
+
+def lifetime_expected_damage_timed(house, sow, strategy):
+
+    total = 0.0
+    for i, year in enumerate(sow.years[:sow.lifetime_years]):
+        if year < strategy.action_year:
+            delta_h = 0.0
+        else:
+            delta_h = strategy.delta_h_ft
+
+        ead = expected_annual_damage(house, sow, delta_h)
+        total += ead * sow.factors[i] # discount factors
+
+    return total

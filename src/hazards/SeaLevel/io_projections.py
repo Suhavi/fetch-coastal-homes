@@ -200,6 +200,17 @@ def fetch_lsl(syear=2026, eyear=2160, models=None, rcps=None):
     return ensembles
 
 
+def mean_sea_level_rise_path(model: str, rcp: str, syear: int, eyear: int):
+    ens = fetch_simulation(model, rcp, syear, eyear)
+    return {
+        "years": ens.years,
+        "sea_level_rise_ft": np.mean(ens.lsl_ft, axis=0),
+        "model": ens.model,
+        "rcp": ens.rcp,
+        "source_file": ens.source_file,
+    }
+
+
 if __name__ == "__main__":
     ens = fetch_simulation("BRICK-Slow", "rcp6.0", 2026, 2176)
     print(ens.model, ens.rcp, ens.years[0], ens.years[-1], ens.lsl_ft.shape)

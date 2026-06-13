@@ -6,23 +6,32 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from src.objectives.total_cost import total_cost, total_cost_breakdown
-from src.objectives.reliability import lifetime_prob_no_flooding
-from src.objectives.benefit_cost import benefit_cost_ratio
+from src.objectives.total_cost import total_cost_breakdown_timed
+from src.objectives.reliability import lifetime_prob_no_flooding_timed
+from src.objectives.benefit_cost import benefit_cost_ratio_timed
 
-# action_year is not used yet; timing-aware objectives come next
+OBJECTIVE_DIRECTIONS = {
+    "total_cost": "min",
+    "upfront_cost": "min",
+    "lifetime_expected_damage": "min",
+    "reliability": "max",
+    "benefit_cost": "max",
+}
+
+DEFAULT_OBJECTIVES = ("total_cost", "reliability", "benefit_cost")
 
 def strategy_performance(house, sow, strategy):
-    costs = total_cost_breakdown(house, sow, strategy.delta_h_ft)
+    costs = total_cost_breakdown_timed(house, sow, strategy)
 
     return{
         "delta_h_ft": strategy.delta_h_ft,
         "action_year": strategy.action_year,
         "upfront_cost": costs["upfront_cost_usd"],
+        "undiscounted_upfront_cost": costs["undiscounted_upfront_cost_usd"],
         "lifetime_expected_damage": costs["lifetime_expected_damage_usd"],
         "total_cost": costs["total_cost_usd"],
-        "reliability": lifetime_prob_no_flooding(house, sow, strategy.delta_h_ft),
-        "benefit_cost": benefit_cost_ratio(house, sow, strategy.delta_h_ft)
+        "reliability": lifetime_prob_no_flooding_timed(house, sow, strategy),
+        "benefit_cost": benefit_cost_ratio_timed(house, sow, strategy)
     }
 
 def batch_strategies_performance(house, sow, strategies):
@@ -31,28 +40,31 @@ def batch_strategies_performance(house, sow, strategies):
         for strategy in strategies
     ]
 
-"""
-A MINIMISING FUNCTION
-objectives = [
-    total_cost,
-    -reliability,
-    -benefit_cost,
-]
-"""
+
+def objective_vector(strategy_performance, objectives=DEFAULT_OBJECTIVES):
+    values = []
+
+    for objective in objectives:
+        direction = OBJECTIVE_DIRECTIONS[objective]
+        value = strategy_performance[objective]
+
+        if np.isnan(value):
+            value = -np.inf if direction == "max" else np.inf
+
+        values.append(value if direction == "min" else -value)
+
+    return np.array(values)
+
 
 def is_dominated(a,b): # read as a is dominated by b, i.e. b is the dominant strategy
     return np.all(b<=a) and np.any(b<a)
 
 
-def pareto(strategies_perfomance):
+def pareto(strategies_performance, objectives=DEFAULT_OBJECTIVES):
     values = np.array([
-                    [
-                        stp["total_cost"], 
-                       -stp["reliability"], 
-                       -(-np.inf if np.isnan(stp["benefit_cost"]) else stp["benefit_cost"]) 
-                    ] 
-                for stp in strategies_perfomance
-                ])
+        objective_vector(stp, objectives)
+        for stp in strategies_performance
+    ])
         
     keep = []
 
@@ -67,6 +79,6 @@ def pareto(strategies_perfomance):
                 break
 
         if not dominated:
-            keep.append(strategies_perfomance[i])
+            keep.append(strategies_performance[i])
     
     return keep

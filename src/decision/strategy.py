@@ -6,6 +6,7 @@ from itertools import product
 class ElevationStrategy:
     delta_h_ft: float
     action_year: int
+    
 
 
 def strategy_grid(delta_h_values: np.ndarray, action_years):

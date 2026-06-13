@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 
 # definiting base costs acc to CLARA
 clara_base_cost = {
@@ -19,8 +20,8 @@ def elevation_cost(delta_h_ft: float, sqft: float):
     if np.isclose(delta_h_ft, 0):
         return 0.0
 
-    if delta_h_ft < 3:
-        return np.nan
+    # if delta_h_ft < 3:
+    #     return np.nan
     
     if delta_h_ft > 14:
         raise ValueError("Elevation must be 0 or between 3 and 14 ft.")
@@ -50,8 +51,8 @@ def plot_elevation_cost():
 
         ax.plot(heights, np.array(costs) / 1000, label=f"{sqft:,} sqft")
         
-    ax.axvspan(0, 3, color="0.85", alpha=0.6)
-    ax.text(1.5, 250, "Not practical", rotation=90, ha="center", va="center")
+    # ax.axvspan(0, 3, color="0.85", alpha=0.6)
+    # ax.text(1.5, 250, "Not practical", rotation=90, ha="center", va="center")
 
     ax.set_xlabel("Heightening (ft)")
     ax.set_ylabel("Construction cost (1,000 USD)")
@@ -69,10 +70,11 @@ if __name__ == "__main__":
     print(elevation_cost(8, 2000))
 
     fig, ax = plot_elevation_cost()
-    fig.savefig("plots/economics/elevation_cost.png", dpi=300)
+    output_dir = Path(__file__).resolve().parents[2] / "plots" / "03-economics"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_dir / "elevation_cost_all.png", dpi=300)
 
     plt.show()
-
 
 
 

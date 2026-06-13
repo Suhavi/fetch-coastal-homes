@@ -21,6 +21,22 @@ def fit_gev(max_surge_ft):
         "scale": scale  # controls spread
     }
 
+
+def fit_gev_distribution(max_surge_ft):
+    gev = fit_gev(max_surge_ft)
+    return genextreme(
+        c=gev["shape"],
+        loc=gev["loc"],
+        scale=gev["scale"],
+    )
+
+
+def observed_surge_distribution(station=SEWELLS, years=range(1927, 2026)):
+    data = fetch_hourly_all_years(station, years)
+    summary = annual_summary(data)
+    return fit_gev_distribution(summary["max_surge_ft"])
+
+
 # definition for a 100-year event, annual exceedance prob = 1/100
 
 def return_levels(return_periods, gev):
