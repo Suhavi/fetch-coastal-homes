@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 from pathlib import Path
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 
 ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
@@ -12,41 +13,50 @@ if str(ROOT) not in sys.path:
 from src.hazards.SeaLevel.observed_noaa import annual_summary
 from src.hazards.SeaLevel.io_noaa import SEWELLS, fetch_hourly_all_years
 
+# WITH UNCERTAINTY PARAMETERS
+# TODO: MCM AS PER MAGGIE'S CODE.
 
+
+
+# WITHOUT UNCERTAINTY PARAMETERS
+# FIT THE GEV
 def fit_gev(max_surge_ft):
     shape, loc, scale = genextreme.fit(max_surge_ft)
-    return {
-        "shape":shape,  # tail behaviour
-        "loc": loc,     # roughly the center
-        "scale": scale  # controls spread
-    }
+    return {"shape":shape, "loc": loc,  "scale": scale}
 
-
-def fit_gev_distribution(max_surge_ft):
-    gev = fit_gev(max_surge_ft)
-    return genextreme(
-        c=gev["shape"],
-        loc=gev["loc"],
-        scale=gev["scale"],
-    )
-
+def make_gev_distribution(shape, loc, scale):
+    # returns gev as an object to be able to call .pdf, .cdf on it
+    return genextreme(c=shape, loc=loc, scale=scale)
 
 def observed_surge_distribution(station=SEWELLS, years=range(1927, 2026)):
-    data = fetch_hourly_all_years(station, years)
-    summary = annual_summary(data)
-    return fit_gev_distribution(summary["max_surge_ft"])
+    summary = annual_summary(years=years, station=station)
+    gev_params = fit_gev(summary["max_surge_ft"])
+    gev_dist = make_gev_distribution(**gev_params)
+    return gev_params, gev_dist
+
+
+
+# def observed_surge_distribution(station=SEWELLS, years=range(1927, 2026)):
+#     # data = fetch_hourly_all_years(station, years)
+#     summary = annual_summary(years, station)
+#     return fit_gev_distribution(summary["max_surge_ft"])
 
 
 # definition for a 100-year event, annual exceedance prob = 1/100
+# FEMA FLOODMAPS USE 100-year floods.
+# if return period = 100, probobility in one year = 1/100
 
-def return_levels(return_periods, gev):
+# 100-year return level = flood anomaly height exceeded with 1% annual probability
+def return_levels(return_periods, gev_params):
+    # Given return periods, what flood heights correspond to those probabilities?
+    # find all flood heights which classify as a 100-period flood
     return_periods = np.asarray(return_periods)
-    annual_exceedance_prob = 1 - 1/return_periods
+    annual_non_exceedance_prob = 1 - 1/return_periods
     return genextreme.ppf(
-        annual_exceedance_prob, 
-        gev["shape"], 
-        loc= gev["loc"], 
-        scale= gev["scale"]
+        annual_non_exceedance_prob, 
+        gev_params["shape"], 
+        loc= gev_params["loc"], 
+        scale= gev_params["scale"]
         )
 
 def observed_return_periods(max_surge_ft):
@@ -98,17 +108,15 @@ if __name__ == "__main__":
     print("Fetching observed water levels")
 
     years = range(1927, 2026)
-
     # Get observed annual max surge
-    data = fetch_hourly_all_years(SEWELLS, years)
-    summary = annual_summary(data)
-
+    summary = annual_summary(years, SEWELLS)
     max_surge_ft = summary["max_surge_ft"]
-
-    # Fit an extreme-value distribution
+    # fitting parameters
     print("Fitting GEV storm surge model")
     gev = fit_gev(max_surge_ft)
-    print(gev)
+    print(gev)    
+    gev_dist = make_gev_distribution(gev['shape'], gev['loc'], gev['scale'])
+    
 
     # Convert fitted distribution into return levels
     # and
@@ -116,6 +124,6 @@ if __name__ == "__main__":
 
     fig, ax = plot_return_period(max_surge_ft, gev)
     os.makedirs("plots", exist_ok=True)
-    fig.savefig("plots/storm_surge_return_period.png", dpi=300)
+    # fig.savefig("plots/storm_surge_return_period.png", dpi=300)
 
     plt.show()

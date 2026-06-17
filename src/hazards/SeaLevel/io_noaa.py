@@ -4,6 +4,9 @@ import os
 from datetime import datetime
 from dataclasses import dataclass
 
+NOAA_BASE_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+CACHE_DIR = "data/raw/noaa"
+
 @dataclass
 class WaterLevelStation:
     datum: str
@@ -11,10 +14,6 @@ class WaterLevelStation:
     gage_name: str
     units: str
     time_zone: str
-
-
-NOAA_BASE_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
-CACHE_DIR = "data/raw/noaa"
 
 SEWELLS = WaterLevelStation(
             datum     =  "NAVD", 
@@ -27,7 +26,7 @@ SEWELLS = WaterLevelStation(
 def water_level_params(station, year):
     return {
     "product": "hourly_height",
-    "application": "FETCH",
+    "application": "FETCH", # project title
     "begin_date": f"{year}0101",
     "end_date": f"{year}1231",
     "datum": station.datum,

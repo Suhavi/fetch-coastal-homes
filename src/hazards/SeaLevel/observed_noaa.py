@@ -17,14 +17,17 @@ KNOWN_STORMS = [
     {"name": "Ash Wednesday", "year": 1962},
     {"name": "Isabel", "year": 2003},
     {"name": "Nor'Ida", "year": 2009},
+    {"name": "Irene", "year": 2011}
 ]
+
+YEARS = range(1927,2026)
 
 
 def get_years(times: np.ndarray):
-    return np.array([t.year for t in times])
+    return np.array([t.year for t in times]) # fetches the t from datetime object
 
 
-def annual_summary(allyrs_hourly_data):
+def annual_summary(years=YEARS, station=SEWELLS):
 
     """
     Observed water levels are hourly.
@@ -33,6 +36,7 @@ def annual_summary(allyrs_hourly_data):
     but the model usually keeps annual maximum surge, 
     which is also one value per year.
     """
+    allyrs_hourly_data = fetch_hourly_all_years(station, years)
     
     times = allyrs_hourly_data["time"]
     water_level_ft = allyrs_hourly_data["water_level_ft"]
@@ -63,71 +67,144 @@ def annual_summary(allyrs_hourly_data):
     }
 
 
-def plot_mean_sl(summary: dict):
-    fig, ax = plt.subplots(figsize=(8,4))
-
-    ax.plot(summary["years"], summary["mean_sl_ft"], color="0.45", alpha=0.75)
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Annual mean sea level (ft)")
-    ax.grid(True, alpha=0.3)
-
-    return fig, ax
 
 
-def plot_max_surge(summary):
+def make_the_plot(summary, save=False):
+    years = summary["years"].astype(int)
+    mean_sl = summary["mean_sl_ft"]
+    max_surge = summary["max_surge_ft"]
 
-    fig, ax = plt.subplots(figsize=(8,4))
-    ax.scatter(summary["years"], summary["max_surge_ft"])
+    mean_color = "#2E7D32"    # deep green
+    surge_color = "#1565C0"   # deep blue
+    storm_color = "#6A1B9A"   # dark purple
+    vline_color = "#777777"
 
-    ## KNOWN STORMS
+    fig, ax = plt.subplots(figsize=(12, 5.5))
+
+    ax.plot(years, mean_sl, color=mean_color, lw=2.8)
+    ax.plot(years, max_surge, color=surge_color, lw=2.8)
+
     for storm in KNOWN_STORMS:
-        year = storm["year"]
-        idx = np.where(summary["years"] == year)[0]
+        storm_year = storm["year"]
 
-        if len(idx) == 0:
-            continue
+        if storm_year in years:
+            i = np.where(years == storm_year)[0][0]
+            yval = max_surge[i]
 
-        idx = idx[0]
-        x = summary["years"][idx]
-        y = summary["max_surge_ft"][idx]
+            ax.scatter(storm_year, yval, color=storm_color, s=42, zorder=5)
 
-        ax.annotate(
-            storm["name"],
-            xy=(x, y),
-            xytext=(x + 2, y + 0.3),
-            arrowprops={"arrowstyle": "-", "color": "red", "linewidth": 0.8},
-            fontsize=8,
+            ax.plot(
+                [storm_year, storm_year],
+                [yval, yval + 0.45],
+                color=vline_color,
+                lw=0.7,
+                zorder=4
+            )
+
+            ax.text(
+                storm_year,
+                yval + 0.5,
+                storm["name"],
+                color="black",
+                fontsize=8.5,
+                ha="center",
+                va="bottom"
+            )
+
+    # direct labels instead of legend
+    ax.text(years[-1] + 1, mean_sl[-1], "Annual mean sea level",
+            color=mean_color, fontsize=10, va="center")
+
+    ax.text(years[-1] + 1, max_surge[-1], "Annual max anomaly",
+            color=surge_color, fontsize=10, va="center")
+
+    ax.set_xticks(np.arange(1927, 2026, 10))
+    ax.set_xlim(1927, 2031)
+
+    # ax.set_xlabel("Year")
+    ax.set_ylabel("Water level (ft)")
+    # ax.set_title("Observed Mean Sea Level and Annual Extreme Water-Level Anomalies")
+
+    ax.grid(False)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    plt.tight_layout()
+
+    if save:
+        fig.savefig(
+            "../figures/01-hazards/annual_mean_sl_and_max_anomaly.pdf",
+            format="pdf",
+            bbox_inches="tight",
+            dpi=300
         )
 
+    plt.show()
 
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Annual max storm surge (ft)")
-    ax.grid(True, alpha=0.3)
 
-    return fig, ax
+
+
+# def plot_mean_sl(summary: dict):
+#     fig, ax = plt.subplots(figsize=(8,4))
+
+#     ax.plot(summary["years"], summary["mean_sl_ft"], color="0.45", alpha=0.75)
+#     ax.set_xlabel("Year")
+#     ax.set_ylabel("Annual mean sea level (ft)")
+#     ax.grid(True, alpha=0.3)
+
+#     return fig, ax
+
+
+# def plot_max_surge(summary):
+
+#     fig, ax = plt.subplots(figsize=(8,4))
+#     ax.scatter(summary["years"], summary["max_surge_ft"])
+
+#     ## KNOWN STORMS
+#     for storm in KNOWN_STORMS:
+#         year = storm["year"]
+#         idx = np.where(summary["years"] == year)[0]
+
+#         if len(idx) == 0:
+#             continue
+
+#         idx = idx[0]
+#         x = summary["years"][idx]
+#         y = summary["max_surge_ft"][idx]
+
+#         ax.annotate(
+#             storm["name"],
+#             xy=(x, y),
+#             xytext=(x + 2, y + 0.3),
+#             arrowprops={"arrowstyle": "-", "color": "red", "linewidth": 0.8},
+#             fontsize=8,
+#         )
+
+
+#     ax.set_xlabel("Year")
+#     ax.set_ylabel("Annual max storm surge (ft)")
+#     ax.grid(True, alpha=0.3)
+
+#     return fig, ax
 
 
 if __name__ == "__main__":
     print("Computing from Observed Data")
 
-    years = range(1927,2026)
-
-    # fetch the NOAA data
-    data = fetch_hourly_all_years(SEWELLS, years)
-    print(data)
-    
+    years = range(1927,2026) # 100 years
     # comute annual summaries
-    summary = annual_summary(data)
+    summary = annual_summary(years)
     print(summary)
 
     #make plots
 
-    fig1, ax = plot_mean_sl(summary)
-    fig2, ax = plot_max_surge(summary)
-    plt.show()
+    # fig1, ax = plot_mean_sl(summary)
+    # fig2, ax = plot_max_surge(summary)
+    # plt.show()
+    make_the_plot(summary,False)
 
     #save show the plots
-    if True:
-        os.makedirs("plots/observed-sl", exist_ok=True)
-        fig1.savefig("plots/observed-sl/observed_mean_sl.png", dpi=300)
-        fig2.savefig("plots/observed-sl/observed_max_surge.png", dpi=300)
+    # if True:
+    #     os.makedirs("plots/observed-sl", exist_ok=True)
+    #     fig1.savefig("plots/observed-sl/observed_mean_sl.png", dpi=300)
+    #     fig2.savefig("plots/observed-sl/observed_max_surge.png", dpi=300)

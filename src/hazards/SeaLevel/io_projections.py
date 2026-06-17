@@ -3,14 +3,19 @@ from dataclasses import dataclass
 import json
 import os
 
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 CM_TO_FT = 0.0328084
 MM_TO_FT = 0.00328084
 M_TO_FT = 3.28084
-CONFIG_PATH = "config/model_file_map.json"
-DATA_DIR = os.path.join("data", "raw/msl")
-simMap = json.load(open(CONFIG_PATH, "r"))
+CONFIG_PATH = PROJECT_ROOT / "config" / "model_file_map.json"
+DATA_DIR = PROJECT_ROOT / "data" / "raw" / "msl"
+with CONFIG_PATH.open() as config_file:
+    simMap = json.load(config_file)
 
+# Local Sea Level Simulation
 
 @dataclass
 class LSLEnsemble:
@@ -35,14 +40,37 @@ class LSLEnsemble:
 
 def decadal_to_annual(values: np.ndarray, years_in: np.ndarray, years_out: np.ndarray):
     """
-    converts decical to annual data
-    """
+    Convert projection data to annual values with linear extrapolation.
 
-    # return np.interp(years_out, years_in, values)
-    return np.vstack([
-        np.interp(years_out, years_in, sim)
-        for sim in values
-    ])
+    Values within the source-year range are linearly interpolated. Requested
+    years outside that range continue using the slope between the nearest two
+    source years instead of holding the boundary value constant.
+    """
+    years_in = np.asarray(years_in)
+    years_out = np.asarray(years_out)
+    values = np.atleast_2d(values)
+
+    if years_in.size < 2:
+        raise ValueError("At least two source years are required for extrapolation.")
+
+    annual_values = []
+    before_source = years_out < years_in[0]
+    after_source = years_out > years_in[-1]
+
+    for sim in values:
+        annual = np.interp(years_out, years_in, sim)
+        start_slope = (sim[1] - sim[0]) / (years_in[1] - years_in[0])
+        end_slope = (sim[-1] - sim[-2]) / (years_in[-1] - years_in[-2])
+
+        annual[before_source] = sim[0] + start_slope * (
+            years_out[before_source] - years_in[0]
+        )
+        annual[after_source] = sim[-1] + end_slope * (
+            years_out[after_source] - years_in[-1]
+        )
+        annual_values.append(annual)
+
+    return np.vstack(annual_values)
 
 
 def convert_to_ft(values, curr_units):
@@ -187,7 +215,7 @@ def fetch_simulation(
         source_file=source_file,
     )
 
-
+# WITH UNCERTAINTY 
 def fetch_lsl(syear=2026, eyear=2160, models=None, rcps=None):
     ensembles = []
     for model, rcp_map in simMap.items():
@@ -199,7 +227,7 @@ def fetch_lsl(syear=2026, eyear=2160, models=None, rcps=None):
             ensembles.append(fetch_simulation(model, rcp, syear, eyear))
     return ensembles
 
-
+# WITHOUT UNCERTAINTY
 def mean_sea_level_rise_path(model: str, rcp: str, syear: int, eyear: int):
     ens = fetch_simulation(model, rcp, syear, eyear)
     return {
@@ -209,6 +237,7 @@ def mean_sea_level_rise_path(model: str, rcp: str, syear: int, eyear: int):
         "rcp": ens.rcp,
         "source_file": ens.source_file,
     }
+
 
 
 if __name__ == "__main__":
