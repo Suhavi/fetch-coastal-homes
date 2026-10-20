@@ -1,33 +1,111 @@
 {
   "BRICK-Slow": {
+    "rcp2.6": {
+      "filename": "BRICK_NOfastDynamics_SP_20Nov2018.nc",
+      "file_type": "netcdf",
+      "variable": "LocalSeaLevel_RCP26",
+      "units": "m",
+      "source_model": "BRICK Slow"
+    },
+    "rcp4.5": {
+      "filename": "BRICK_NOfastDynamics_SP_20Nov2018.nc",
+      "file_type": "netcdf",
+      "variable": "LocalSeaLevel_RCP45",
+      "units": "m",
+      "source_model": "BRICK Slow"
+    },
     "rcp6.0": {
       "filename": "BRICK_NOfastDynamics_SP_20Nov2018.nc",
       "file_type": "netcdf",
       "variable": "LocalSeaLevel_RCP60",
       "units": "m",
       "source_model": "BRICK Slow"
+    },
+    "rcp8.5": {
+      "filename": "BRICK_NOfastDynamics_SP_20Nov2018.nc",
+      "file_type": "netcdf",
+      "variable": "LocalSeaLevel_RCP85",
+      "units": "m",
+      "source_model": "BRICK Slow"
     }
   },
   "BRICK-Fast": {
+    "rcp2.6": {
+      "filename": "BRICK_SewellsPoint_FastDynamics_20Nov2018.nc",
+      "file_type": "netcdf",
+      "variable": "LocalSeaLevel_RCP26",
+      "units": "m",
+      "source_model": "BRICK Fast"
+    },
+    "rcp4.5": {
+      "filename": "BRICK_SewellsPoint_FastDynamics_20Nov2018.nc",
+      "file_type": "netcdf",
+      "variable": "LocalSeaLevel_RCP45",
+      "units": "m",
+      "source_model": "BRICK Fast"
+    },
     "rcp6.0": {
       "filename": "BRICK_SewellsPoint_FastDynamics_20Nov2018.nc",
       "file_type": "netcdf",
       "variable": "LocalSeaLevel_RCP60",
       "units": "m",
       "source_model": "BRICK Fast"
+    },
+    "rcp8.5": {
+      "filename": "BRICK_SewellsPoint_FastDynamics_20Nov2018.nc",
+      "file_type": "netcdf",
+      "variable": "LocalSeaLevel_RCP85",
+      "units": "m",
+      "source_model": "BRICK Fast"
     }
   },
   "K14": {
+    "rcp2.6": {
+      "filename": "LSLproj_MC_299_rcp26.csv",
+      "file_type": "csv",
+      "units": "cm",
+      "source_model": "K14"
+    },
+    "rcp4.5": {
+      "filename": "LSLproj_MC_299_rcp45.csv",
+      "file_type": "csv",
+      "units": "cm",
+      "source_model": "K14"
+    },
     "rcp6.0": {
       "filename": "LSLproj_MC_299_rcp60.csv",
+      "file_type": "csv",
+      "units": "cm",
+      "source_model": "K14"
+    },
+    "rcp8.5": {
+      "filename": "LSLproj_MC_299_rcp85.csv",
       "file_type": "csv",
       "units": "cm",
       "source_model": "K14"
     }
   },
   "DP16": {
+    "rcp2.6": {
+      "filename": "LSLproj_MC_DP16_SEW_299_rcp26.csv",
+      "file_type": "csv",
+      "units": "cm",
+      "source_model": "DP16"
+    },
+    "rcp4.5": {
+      "filename": "LSLproj_MC_DP16_SEW_299_rcp45.csv",
+      "file_type": "csv",
+      "units": "cm",
+      "source_model": "DP16"
+    },
     "rcp6.0": {
       "filename": "LSLproj_MC_DP16_SEW_299_rcp60.csv",
+      "file_type": "csv",
+      "units": "cm",
+      "source_model": "DP16"
+    },
+    "rcp8.5": {
+      "filename": "LSLproj_MC_DP16_SEW_299_rcp85.csv",
       "file_type": "csv",
       "units": "cm",
       "source_model": "DP16"

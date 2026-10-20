@@ -2,16 +2,31 @@ from src.economics.elevation_cost import elevation_cost
 from src.objectives.damages import lifetime_expected_damage, lifetime_expected_damage_timed
 import numpy as np
 
-def total_cost(house, sow, delta_h_ft: float):
+def total_cost(house, sow, first_floor_elevation_ft: float, delta_h_ft: float):
     upfront = elevation_cost(delta_h_ft, house.sqft)
-    damages = lifetime_expected_damage(house, sow, delta_h_ft)
+    damages = lifetime_expected_damage(
+        house,
+        sow,
+        first_floor_elevation_ft,
+        delta_h_ft,
+    )
 
     return upfront + damages
 
 
-def total_cost_breakdown(house, sow, delta_h_ft: float):
+def total_cost_breakdown(
+    house,
+    sow,
+    first_floor_elevation_ft: float,
+    delta_h_ft: float,
+):
     upfront = elevation_cost(delta_h_ft, house.sqft)
-    damages = lifetime_expected_damage(house, sow, delta_h_ft)
+    damages = lifetime_expected_damage(
+        house,
+        sow,
+        first_floor_elevation_ft,
+        delta_h_ft,
+    )
 
     return {
         "upfront_cost_usd": upfront,
@@ -27,13 +42,23 @@ def action_year_index(sow, action_year: int):
 
     return idx[0]
 
-def total_cost_breakdown_timed(house, sow, strategy):
+def total_cost_breakdown_timed(
+    house,
+    sow,
+    strategy,
+    first_floor_elevation_ft: float,
+):
     idx = action_year_index(sow, strategy.action_year)
 
     upfront = elevation_cost(strategy.delta_h_ft, house.sqft)
     discounted_upfront = upfront * sow.factors[idx]
 
-    damages = lifetime_expected_damage_timed(house, sow, strategy)
+    damages = lifetime_expected_damage_timed(
+        house,
+        sow,
+        strategy,
+        first_floor_elevation_ft,
+    )
 
     return {
         "upfront_cost_usd": discounted_upfront,

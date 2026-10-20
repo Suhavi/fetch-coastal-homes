@@ -20,23 +20,56 @@ OBJECTIVE_DIRECTIONS = {
 
 DEFAULT_OBJECTIVES = ("total_cost", "reliability", "benefit_cost")
 
-def strategy_performance(house, sow, strategy):
-    costs = total_cost_breakdown_timed(house, sow, strategy)
+def strategy_performance(house, sow, strategy, first_floor_elevation_ft: float):
+    costs = total_cost_breakdown_timed(
+        house,
+        sow,
+        strategy,
+        first_floor_elevation_ft,
+    )
 
     return{
+        "first_floor_elevation_ft": first_floor_elevation_ft,
         "delta_h_ft": strategy.delta_h_ft,
         "action_year": strategy.action_year,
         "upfront_cost": costs["upfront_cost_usd"],
         "undiscounted_upfront_cost": costs["undiscounted_upfront_cost_usd"],
         "lifetime_expected_damage": costs["lifetime_expected_damage_usd"],
         "total_cost": costs["total_cost_usd"],
-        "reliability": lifetime_prob_no_flooding_timed(house, sow, strategy),
-        "benefit_cost": benefit_cost_ratio_timed(house, sow, strategy)
+        "reliability": lifetime_prob_no_flooding_timed(
+            sow,
+            strategy,
+            first_floor_elevation_ft,
+        ),
+        "benefit_cost": benefit_cost_ratio_timed(
+            house,
+            sow,
+            strategy,
+            first_floor_elevation_ft,
+        )
     }
 
-def batch_strategies_performance(house, sow, strategies):
+def batch_strategies_performance(
+    house,
+    sow,
+    strategies,
+    first_floor_elevation_ft: float,
+):
     return[
-        strategy_performance(house, sow, strategy)
+        strategy_performance(
+            house,
+            sow,
+            strategy,
+            first_floor_elevation_ft,
+        )
+        for strategy in strategies
+    ]
+
+
+def batch_floor_heights_performance(house, sow, strategies, floor_heights):
+    return [
+        strategy_performance(house, sow, strategy, floor_height)
+        for floor_height in floor_heights
         for strategy in strategies
     ]
 

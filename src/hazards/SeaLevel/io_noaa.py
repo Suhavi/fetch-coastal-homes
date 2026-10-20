@@ -1,12 +1,15 @@
 import requests
 import numpy as np
-import os
 from datetime import datetime
 from dataclasses import dataclass
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DATA_DIR = PROJECT_ROOT / "data" / "raw" / "noaa"
 
 NOAA_BASE_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
-CACHE_DIR = "data/raw/noaa"
 
+# todo make global
 @dataclass
 class WaterLevelStation:
     datum: str
@@ -15,6 +18,7 @@ class WaterLevelStation:
     units: str
     time_zone: str
 
+#todo, make global
 SEWELLS = WaterLevelStation(
             datum     =  "NAVD", 
             gage_id   =  "8638610",
@@ -23,6 +27,7 @@ SEWELLS = WaterLevelStation(
             time_zone =  "GMT"
             )
 
+# as retrived from noaa
 def water_level_params(station, year):
     return {
     "product": "hourly_height",
@@ -36,16 +41,16 @@ def water_level_params(station, year):
     "format": "json"
     }
 
-
+# to parse through the data dir.
 def cache_file(station, year):
-    return os.path.join(CACHE_DIR, f"{station.gage_id}_{year}_{station.datum}_{station.units}.npz")
+    return DATA_DIR / f"{station.gage_id}_{year}_{station.datum}_{station.units}.npz"
 
-
+# will not redownload if alr present
 def fetch_hourly_water_levels(station, year):
-    os.makedirs(CACHE_DIR, exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     fname = cache_file(station, year)
 
-    if os.path.exists(fname):
+    if fname.exists():
         cached = np.load(fname, allow_pickle=True)
         return {
             "station": station,

@@ -5,5 +5,5 @@
 *.ipynb
 data/raw/noaa/
 .DS_Store
-tl_2022_42_tabblock20.zip
 *.npz
+casestudy/va2024_hampton_rds_dem_J1471124-2/*.tif

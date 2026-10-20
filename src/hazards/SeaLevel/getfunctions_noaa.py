@@ -11,6 +11,8 @@ if str(ROOT) not in sys.path:
 from src.hazards.SeaLevel.io_noaa import SEWELLS, fetch_hourly_all_years
 
 plt.style.use("seaborn-v0_8-whitegrid")
+
+# can make global?
 KNOWN_STORMS = [
     {"name": "Chesapeake-Potomac", "year": 1933},
     {"name": "Outer Banks hurricane", "year": 1936},
@@ -20,14 +22,17 @@ KNOWN_STORMS = [
     {"name": "Irene", "year": 2011}
 ]
 
+DATUM = 2026
+# make GLOBAL
 YEARS = range(1927,2026)
+# take current year and make GLOBAL
 
 
 def get_years(times: np.ndarray):
     return np.array([t.year for t in times]) # fetches the t from datetime object
 
 
-def annual_summary(years=YEARS, station=SEWELLS):
+def get_annualsummary(years=YEARS, station=SEWELLS):
 
     """
     Observed water levels are hourly.
@@ -67,79 +72,79 @@ def annual_summary(years=YEARS, station=SEWELLS):
     }
 
 
+# TODO to be removed
 
+# def make_the_plot(summary, save=False):
+#     years = summary["years"].astype(int)
+#     mean_sl = summary["mean_sl_ft"]
+#     max_surge = summary["max_surge_ft"]
 
-def make_the_plot(summary, save=False):
-    years = summary["years"].astype(int)
-    mean_sl = summary["mean_sl_ft"]
-    max_surge = summary["max_surge_ft"]
+#     mean_color = "#2E7D32"    # deep green
+#     surge_color = "#1565C0"   # deep blue
+#     storm_color = "#6A1B9A"   # dark purple
+#     vline_color = "#777777"
 
-    mean_color = "#2E7D32"    # deep green
-    surge_color = "#1565C0"   # deep blue
-    storm_color = "#6A1B9A"   # dark purple
-    vline_color = "#777777"
+#     fig, ax = plt.subplots(figsize=(12, 5.5))
 
-    fig, ax = plt.subplots(figsize=(12, 5.5))
+#     ax.plot(years, mean_sl, color=mean_color, lw=2.8)
+#     ax.plot(years, max_surge, color=surge_color, lw=2.8)
 
-    ax.plot(years, mean_sl, color=mean_color, lw=2.8)
-    ax.plot(years, max_surge, color=surge_color, lw=2.8)
+#     for storm in KNOWN_STORMS:
+#         storm_year = storm["year"]
 
-    for storm in KNOWN_STORMS:
-        storm_year = storm["year"]
+#         if storm_year in years:
+#             i = np.where(years == storm_year)[0][0]
+#             yval = max_surge[i]
 
-        if storm_year in years:
-            i = np.where(years == storm_year)[0][0]
-            yval = max_surge[i]
+#             ax.scatter(storm_year, yval, color=storm_color, s=42, zorder=5)
 
-            ax.scatter(storm_year, yval, color=storm_color, s=42, zorder=5)
+#             ax.plot(
+#                 [storm_year, storm_year],
+#                 [yval, yval + 0.45],
+#                 color=vline_color,
+#                 lw=0.7,
+#                 zorder=4
+#             )
 
-            ax.plot(
-                [storm_year, storm_year],
-                [yval, yval + 0.45],
-                color=vline_color,
-                lw=0.7,
-                zorder=4
-            )
+#             ax.text(
+#                 storm_year,
+#                 yval + 0.5,
+#                 storm["name"],
+#                 color="black",
+#                 fontsize=8.5,
+#                 ha="center",
+#                 va="bottom"
+#             )
 
-            ax.text(
-                storm_year,
-                yval + 0.5,
-                storm["name"],
-                color="black",
-                fontsize=8.5,
-                ha="center",
-                va="bottom"
-            )
+#     # direct labels instead of legend
+#     ax.text(years[-1] + 1, mean_sl[-1], "Annual mean sea level",
+#             color=mean_color, fontsize=10, va="center")
 
-    # direct labels instead of legend
-    ax.text(years[-1] + 1, mean_sl[-1], "Annual mean sea level",
-            color=mean_color, fontsize=10, va="center")
+#     ax.text(years[-1] + 1, max_surge[-1], "Annual max anomaly",
+#             color=surge_color, fontsize=10, va="center")
 
-    ax.text(years[-1] + 1, max_surge[-1], "Annual max anomaly",
-            color=surge_color, fontsize=10, va="center")
+#     ax.set_xticks(np.arange(1927, 2026, 10))
+#     ax.set_xlim(1927, 2031)
 
-    ax.set_xticks(np.arange(1927, 2026, 10))
-    ax.set_xlim(1927, 2031)
+#     # ax.set_xlabel("Year")
+#     ax.set_ylabel("Water level (ft)")
+#     # ax.set_title("Observed Mean Sea Level and Annual Extreme Water-Level Anomalies")
 
-    # ax.set_xlabel("Year")
-    ax.set_ylabel("Water level (ft)")
-    # ax.set_title("Observed Mean Sea Level and Annual Extreme Water-Level Anomalies")
+#     ax.grid(False)
+#     ax.spines["top"].set_visible(False)
+#     ax.spines["right"].set_visible(False)
 
-    ax.grid(False)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+#     plt.tight_layout()
 
-    plt.tight_layout()
+#     if save:
+#         fig.savefig(
+#             "../figures/01-hazards/annual_mean_sl_and_max_anomaly.pdf",
+#             format="pdf",
+#             bbox_inches="tight",
+#             dpi=300
+#         )
 
-    if save:
-        fig.savefig(
-            "../figures/01-hazards/annual_mean_sl_and_max_anomaly.pdf",
-            format="pdf",
-            bbox_inches="tight",
-            dpi=300
-        )
-
-    plt.show()
+#     plt.show()
 
 
 
@@ -190,10 +195,9 @@ def make_the_plot(summary, save=False):
 
 if __name__ == "__main__":
     print("Computing from Observed Data")
-
     years = range(1927,2026) # 100 years
     # comute annual summaries
-    summary = annual_summary(years)
+    summary = get_annualsummary(years)
     print(summary)
 
     #make plots
@@ -201,7 +205,7 @@ if __name__ == "__main__":
     # fig1, ax = plot_mean_sl(summary)
     # fig2, ax = plot_max_surge(summary)
     # plt.show()
-    make_the_plot(summary,False)
+    # make_the_plot(summary,False)
 
     #save show the plots
     # if True:

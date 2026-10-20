@@ -20,13 +20,13 @@ def main():
     house = House(
         sqft=1500,
         value_usd=300000,
-        first_floor_elevation_ft=1.0,
         lifetime_years=100,
     )
     results = batch_strategies_performance(
         house,
         sow,
         strategy_grid(np.arange(1, 15), [2026]),
+        first_floor_elevation_ft=5.0,
     )
     results.sort(key=lambda r: r["delta_h_ft"])
 

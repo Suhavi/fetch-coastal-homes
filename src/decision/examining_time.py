@@ -14,10 +14,20 @@ from src.decision.visualisation import _tufte_axes
 from src.world.house import House
 
 
-def results_for_heights_over_time(house, sow, heights):
+def results_for_heights_over_time(
+    house,
+    sow,
+    heights,
+    first_floor_elevation_ft,
+):
     action_years = sow.years[:sow.lifetime_years]
     strategies = strategy_grid(heights, action_years)
-    return batch_strategies_performance(house, sow, strategies)
+    return batch_strategies_performance(
+        house,
+        sow,
+        strategies,
+        first_floor_elevation_ft,
+    )
 
 
 def _results_by_height(results, height):
@@ -141,16 +151,26 @@ if __name__ == "__main__":
     house = House(
         sqft=1500,
         value_usd=300000,
-        first_floor_elevation_ft=14.0,
         lifetime_years=100,
     )
 
+    first_floor_elevation_ft = 5.0
     heights = np.arange(1, 15)
-    results = results_for_heights_over_time(house, sow, heights)
+    results = results_for_heights_over_time(
+        house,
+        sow,
+        heights,
+        first_floor_elevation_ft,
+    )
     front_all = pareto(results)
 
     strategies_now = strategy_grid(heights, [2026, 2027, 2028, 2029, 2030])
-    results_now = batch_strategies_performance(house, sow, strategies_now)
+    results_now = batch_strategies_performance(
+        house,
+        sow,
+        strategies_now,
+        first_floor_elevation_ft,
+    )
     front_now = pareto(results_now)
 
     print_pareto_times("Pareto front, with time flexibility", front_all)

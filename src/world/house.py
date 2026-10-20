@@ -6,7 +6,6 @@ from dataclasses import dataclass
 class House:
     sqft: float
     value_usd: float
-    first_floor_elevation_ft: float
     lifetime_years: int = 100
     # extendable factors
     # location: str = ""

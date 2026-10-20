@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from src.hazards.SeaLevel.observed_noaa import annual_summary
-from src.hazards.SeaLevel.io_noaa import SEWELLS, fetch_hourly_all_years
+from src.hazards.SeaLevel.getfunctions_noaa import get_annualsummary
+from src.hazards.SeaLevel.io_noaa import SEWELLS
 
 # WITH UNCERTAINTY PARAMETERS
 # TODO: MCM AS PER MAGGIE'S CODE.
@@ -29,16 +29,59 @@ def make_gev_distribution(shape, loc, scale):
     return genextreme(c=shape, loc=loc, scale=scale)
 
 def observed_surge_distribution(station=SEWELLS, years=range(1927, 2026)):
-    summary = annual_summary(years=years, station=station)
+    summary = get_annualsummary(years=years, station=station)
     gev_params = fit_gev(summary["max_surge_ft"])
     gev_dist = make_gev_distribution(**gev_params)
     return gev_params, gev_dist
 
 
+def projected_water_level_distributions(slr_path, c=1.5, station=SEWELLS, observed_years=range(1927, 2026)):
+    gev_params, _ = observed_surge_distribution(station=station, years=observed_years)
+
+    return [
+        make_gev_distribution(
+            gev_params["shape"],
+            gev_params["loc"] + (1 + c) * slr_ft,
+            gev_params["scale"],
+        )
+        for slr_ft in slr_path["sea_level_rise_ft"]
+    ]
+
+# when defining a state of the world
+# years
+# site
+# slr_emsemble choice
+# ---> defines the gev distribution
+
+def nonstationary_gev(slr_ensemble, years, station = SEWELLS):
+    """
+    slr_ensemble = {'years':array(), 'sea_level_rise_ft':array(),'model':,'rcp','source_file'}
+    """
+    summary = get_annualsummary(years=years, station=station)
+    gev_params = fit_gev(summary["max_surge_fit"])
+
+    gev_params_at_t = []
+    for i in range(slr_ensemble['years']):
+        locshapesscale_t = {"loc": gev_params['loc']+slr_ensemble["sea_level_rise_ft"][i],
+                            "shape": gev_params["shape"],
+                            "scale": gev_params["scale"]
+                            }
+        gev_params_at_t.append(locshapesscale_t)
+
+    ## compact, less understandable code: use slr_ensemble.copy() and update key.
+    gev_at_time_t = {"years" : slr_ensemble['years'],
+                    'gev_t':  gev_params_at_t,
+                   "model" : slr_ensemble["model"],
+                   "sea_level_rise_ft": slr_ensemble["slr_ensemble"],
+                   "rcp": slr_ensemble['rcp'],
+                   'source_file': slr_ensemble["source_file"]
+                   }
+
+    return gev_at_time_t
 
 # def observed_surge_distribution(station=SEWELLS, years=range(1927, 2026)):
 #     # data = fetch_hourly_all_years(station, years)
-#     summary = annual_summary(years, station)
+#     summary = get_annualsummary(years, station)
 #     return fit_gev_distribution(summary["max_surge_ft"])
 
 
@@ -109,7 +152,7 @@ if __name__ == "__main__":
 
     years = range(1927, 2026)
     # Get observed annual max surge
-    summary = annual_summary(years, SEWELLS)
+    summary = get_annualsummary(years, SEWELLS)
     max_surge_ft = summary["max_surge_ft"]
     # fitting parameters
     print("Fitting GEV storm surge model")
